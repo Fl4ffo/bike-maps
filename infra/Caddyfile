@@ -1,0 +1,8 @@
+# Reverse proxy con TLS automatico.
+# Con solo IP (senza dominio) lasciare :80.
+# Con un dominio: sostituire ":80" con "bikemaps.example.com" — Caddy ottiene
+# e rinnova il certificato Let's Encrypt da solo.
+:80 {
+	encode zstd gzip
+	reverse_proxy api:3000
+}

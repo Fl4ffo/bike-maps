@@ -12,6 +12,15 @@ cd web; npm install; npm run dev    # http://localhost:5173 (anche da LAN)
 
 Richiede il server GraphHopper attivo (`scripts\start-server.ps1`): il dev server proxa `/gh` → `localhost:8989`.
 
+**Modalità produzione** — API Fastify in `api/` come entry-point unico (frontend statico + proxy `/gh` + `/api/health`):
+
+```powershell
+cd web; npm run build     # frontend statico in web/dist
+cd ..\api; npm install; npm run build; npm start    # tutto su http://localhost:3000
+```
+
+Deploy su VPS (Docker Compose + Caddy con TLS automatico): [infra/DEPLOY.md](infra/DEPLOY.md).
+
 ## Fase 2: pipeline fun-score
 
 Routing engine GraphHopper 11.0 self-hosted su estratto OSM Nord-Ovest Italia (Piemonte, Lombardia, Liguria, Valle d'Aosta), con dati di divertimento **precalcolati da una pipeline Python** e iniettati nel grafo come encoded value custom:
@@ -52,6 +61,7 @@ GET http://localhost:8989/route?point=45.070,7.686&point=45.737,7.315&profile=cu
 
 ```
 web/                      # frontend React+TS+Vite: MapLibre, fun-score, GPX
+api/                      # API Fastify: frontend statico + proxy /gh + /api/health
 pipeline/
   fun_tags.py             # pipeline fun-score: PBF -> PBF + tag fun:* (curvatura DP, semafori)
   inspect_scores.py       # ispezione qualitativa degli score su strade note
@@ -63,7 +73,7 @@ graphhopper/
   ext/src/com/bikemaps/   # estensione Java: EV custom fun_* (import via FunScoreImport)
 data/                     # (gitignored) PBF, graph-cache, tile SRTM
 scripts/                  # download / pipeline / import / avvio / test
-infra/docker-compose.yml  # deploy futuro su VPS
+infra/                    # deploy VPS: compose (Caddy+API+GraphHopper), Dockerfile, DEPLOY.md
 ```
 
 Flusso dati: `nord-ovest.osm.pbf` → pipeline Python (tag `fun:curvature`, `fun:signals`) → `nord-ovest-fun.osm.pbf` → import Java custom (`com.bikemaps.FunScoreImport`, registra gli encoded value) → graph-cache → **server GraphHopper ufficiale invariato** (al load gli EV si ricostruiscono dalle properties della cache).

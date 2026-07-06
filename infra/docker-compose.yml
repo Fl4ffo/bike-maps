@@ -1,14 +1,40 @@
-# Deploy su VPS (fase successiva — non serve in locale, dove GraphHopper gira come JAR).
-# Prerequisito sul server: cartelle ../graphhopper (config + jar + custom_models)
-# e ../data (pbf + graph-cache gia' importato, o importare nel container).
+# Stack di produzione (VPS): Caddy (TLS) -> API (frontend + proxy) -> GraphHopper.
+# Prerequisiti sul server: graphhopper/ col JAR e data/ col graph-cache già
+# importato — vedi DEPLOY.md. Avvio:  docker compose up -d --build
 services:
   graphhopper:
     image: eclipse-temurin:21-jre
     working_dir: /app/graphhopper
-    command: java -Xmx6g -Xms2g -jar graphhopper-web-11.0.jar server config.yml
+    command: java -Xmx4g -Xms1g -jar graphhopper-web-11.0.jar server config.yml
     volumes:
       - ../graphhopper:/app/graphhopper
       - ../data:/app/data
-    ports:
-      - "8989:8989"
     restart: unless-stopped
+    # nessuna porta pubblicata: raggiungibile solo dalla rete interna del compose
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/api.Dockerfile
+    environment:
+      - GH_URL=http://graphhopper:8989
+    depends_on:
+      - graphhopper
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
