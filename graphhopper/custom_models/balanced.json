@@ -1,0 +1,35 @@
+// Profilo "balanced" — via di mezzo tra fast e curvy: cerca le strade belle
+// ma senza deviazioni estreme (target: tempo <= ~1.4x del percorso veloce).
+// Stessa struttura di curvy.json con penalita' ammorbidite e
+// distance_influence piu' alto (40 vs 15).
+{
+  "distance_influence": 45,
+  "priority": [
+    { "if": "!car_access", "multiply_by": "0" },
+
+    { "if": "road_class == MOTORWAY", "multiply_by": "0.4" },
+    { "else_if": "road_class == TRUNK", "multiply_by": "0.7" },
+    { "else_if": "road_class == PRIMARY", "multiply_by": "0.85" },
+    { "else_if": "road_class == RESIDENTIAL", "multiply_by": "0.6" },
+    { "else_if": "road_class == LIVING_STREET", "multiply_by": "0.4" },
+    { "else_if": "road_class == SERVICE", "multiply_by": "0.4" },
+    { "else_if": "road_class == TRACK", "multiply_by": "0.25" },
+
+    { "if": "road_environment == TUNNEL", "multiply_by": "0.7" },
+
+    { "if": "urban_density == CITY", "multiply_by": "0.5" },
+    { "else_if": "urban_density == RESIDENTIAL", "multiply_by": "0.8" },
+
+    { "if": "fun_curvature < 5", "multiply_by": "0.75" },
+    { "else_if": "fun_curvature < 25", "multiply_by": "0.9" },
+
+    { "if": "fun_signals >= 4", "multiply_by": "0.65" },
+    { "else_if": "fun_signals >= 2", "multiply_by": "0.85" },
+
+    { "if": "surface == GRAVEL || surface == FINE_GRAVEL || surface == DIRT || surface == GROUND || surface == UNPAVED || surface == SAND || surface == COBBLESTONE || surface == COMPACTED", "multiply_by": "0.2" },
+    { "if": "smoothness == BAD || smoothness == VERY_BAD || smoothness == HORRIBLE || smoothness == VERY_HORRIBLE || smoothness == IMPASSABLE", "multiply_by": "0.3" }
+  ],
+  "speed": [
+    { "if": "true", "limit_to": "car_average_speed" }
+  ]
+}

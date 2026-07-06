@@ -4,7 +4,9 @@ Web app di navigazione che calcola il percorso più **divertente** (curve, passi
 
 ## Stato attuale — Fase 3: web app funzionante
 
-Frontend React + TypeScript + Vite in `web/`: mappa MapLibre (tiles OpenFreeMap), clic per partenza/destinazione (marker trascinabili), **confronto visivo veloce vs divertente**, fun-score 🌀 per percorso, profilo altimetrico, export GPX. Responsive desktop/mobile.
+Frontend React + TypeScript + Vite in `web/`: mappa MapLibre (tiles OpenFreeMap), waypoint multipli con clic (marker trascinabili, tappe rimovibili), **confronto visivo veloce vs divertente**, modalità **Anello** ("giro di ~N km da qui" via `round_trip` con retry automatico sui seed), ricerca località (Photon), selettore **Bilanciato / Max curve**, fun-score 🌀 per percorso, profilo altimetrico, export GPX. Responsive desktop/mobile.
+
+I tre profili su Milano→Varese: veloce 41 min, bilanciato 58 min (1.4×), max curve 76 min (1.9×).
 
 ```powershell
 cd web; npm install; npm run dev    # http://localhost:5173 (anche da LAN)
@@ -78,12 +80,10 @@ infra/                    # deploy VPS: compose (Caddy+API+GraphHopper), Dockerf
 
 Flusso dati: `nord-ovest.osm.pbf` → pipeline Python (tag `fun:curvature`, `fun:signals`) → `nord-ovest-fun.osm.pbf` → import Java custom (`com.bikemaps.FunScoreImport`, registra gli encoded value) → graph-cache → **server GraphHopper ufficiale invariato** (al load gli EV si ricostruiscono dalle properties della cache).
 
-## Iterare sui pesi del profilo curvy
+## Iterare sui pesi dei profili
 
-1. Modifica `graphhopper/custom_models/curvy.json`
-2. Riavvia il server (niente re-import: in questa fase nessun profilo usa CH)
-3. Confronta fast vs curvy con `scripts\test-routes.ps1` e sulla UI su percorsi che conosci
-
-Il re-import serve solo se cambiano: il PBF, `graph.encoded_values` o la lista profili.
+1. Modifica `graphhopper/custom_models/curvy.json` (o `balanced.json`)
+2. Riesegui `scripts\import.ps1` (~3 min: GraphHopper salva i profili nel graph-cache, un custom model modificato richiede il re-import) e riavvia il server
+3. Confronta i profili con `scripts\test-routes.ps1` e sulla UI su percorsi che conosci
 
 Dati © OpenStreetMap contributors (ODbL).

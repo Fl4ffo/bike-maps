@@ -1,8 +1,8 @@
 # Importa il grafo GraphHopper dal PBF arricchito (~7 min, usa il main custom
 # com.bikemaps.FunScoreImport per registrare gli encoded value fun_*).
-# Da rieseguire SOLO se cambiano: il PBF arricchito (dopo run-pipeline.ps1),
-# graph.encoded_values o la lista profili.
-# (I custom model si modificano a caldo: basta riavviare il server.)
+# Da rieseguire se cambiano: il PBF arricchito (dopo run-pipeline.ps1),
+# graph.encoded_values, la lista profili o QUALSIASI custom model (GH salva
+# i profili nel graph-cache: al load "Profiles do not match" se differiscono).
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location (Join-Path $root "graphhopper")

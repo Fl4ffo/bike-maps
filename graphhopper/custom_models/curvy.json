@@ -8,7 +8,8 @@
 // Trebbia) sono taggate trunk; le superstrade vere restano uccise dal
 // rettilineo (fun_curvature < 5).
 // distance_influence basso (15 vs 90 di fast) = deviazioni lunghe ma curve ok.
-// Profilo flessibile (no CH): dopo una modifica basta riavviare il server.
+// ATTENZIONE: dopo una modifica serve il re-import (scripts/import.ps1):
+// i profili sono salvati nel graph-cache all'import.
 {
   "distance_influence": 15,
   "priority": [

@@ -1,7 +1,5 @@
-import type { ProfileId, RoutePath } from '../api';
+import type { RoutePath } from '../api';
 import { computeFunScore } from '../score';
-
-const LABEL: Record<ProfileId, string> = { fast: 'Veloce', curvy: 'Divertente' };
 
 function fmtTime(ms: number): string {
   const min = Math.round(ms / 60000);
@@ -9,20 +7,21 @@ function fmtTime(ms: number): string {
 }
 
 interface Props {
-  profile: ProfileId;
+  title: string;
+  kind: 'fun' | 'fast';
   path: RoutePath;
   selected: boolean;
   onSelect: () => void;
   onGpx: () => void;
 }
 
-export default function RoutePanel({ profile, path, selected, onSelect, onGpx }: Props) {
+export default function RoutePanel({ title, kind, path, selected, onSelect, onGpx }: Props) {
   const score = computeFunScore(path);
   return (
-    <div className={`card ${profile}${selected ? ' selected' : ''}`} onClick={onSelect}>
+    <div className={`card ${kind}${selected ? ' selected' : ''}`} onClick={onSelect}>
       <div className="card-head">
         <span className="dot" />
-        <strong>{LABEL[profile]}</strong>
+        <strong>{title}</strong>
         <span className="fun-badge" title="fun_curvature medio pesato sulla distanza (0-100)">
           🌀 {score.avg.toFixed(0)}
         </span>
