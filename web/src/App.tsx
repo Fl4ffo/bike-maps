@@ -2,10 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchRoute, friendlyError, isRetryableRoundTripError } from './api';
 import type { FunProfileId, LngLat, RoutePath } from './api';
 import { downloadGpx } from './gpx';
+import { computeFunScore } from './score';
+import { getRoute, saveRoute, shareUrl } from './saved';
 import MapView from './components/MapView';
 import RoutePanel from './components/RoutePanel';
 import ElevationChart from './components/ElevationChart';
 import SearchBox from './components/SearchBox';
+import SavedRoutes from './components/SavedRoutes';
 
 type Mode = 'ab' | 'loop';
 
@@ -40,6 +43,10 @@ export default function App() {
   const [selected, setSelected] = useState<'fast' | 'fun'>('fun');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saveName, setSaveName] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   const addPoint = useCallback(
@@ -79,6 +86,7 @@ export default function App() {
     abortRef.current = ctrl;
     setLoading(true);
     setError(null);
+    setSavedId(null); // il giro visualizzato è cambiato: il link salvato non lo rappresenta più
 
     (async () => {
       if (canAb) {
@@ -136,6 +144,65 @@ export default function App() {
     setRoutes(NO_ROUTES);
     setError(null);
     setLoading(false);
+    setSaveName(null);
+    setSavedId(null);
+  };
+
+  // carica un giro salvato ripristinando i parametri: il calcolo riparte da solo
+  // (per gli anelli il seed salvato rende il risultato riproducibile)
+  const loadSaved = useCallback((id: string) => {
+    setError(null);
+    getRoute(id)
+      .then((rec) => {
+        setMode(rec.mode);
+        setFunProfile(rec.funProfile);
+        if (rec.mode === 'loop') {
+          setLoopKm(rec.loopKm ?? 120);
+          if (rec.seed != null) setSeed(rec.seed);
+        }
+        setPoints(rec.points);
+      })
+      .catch(() => setError('Giro salvato non trovato.'));
+  }, []);
+
+  // link condiviso: /?r=ID
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('r');
+    if (id) loadSaved(id);
+  }, [loadSaved]);
+
+  const doSave = async () => {
+    if (!routes.fun || !saveName || !saveName.trim()) return;
+    setSaving(true);
+    try {
+      const score = computeFunScore(routes.fun);
+      const id = await saveRoute({
+        name: saveName.trim(),
+        mode,
+        funProfile,
+        points,
+        loopKm: mode === 'loop' ? loopKm : undefined,
+        seed: mode === 'loop' ? seed : undefined,
+        distance: routes.fun.distance,
+        timeMs: routes.fun.time,
+        ascend: routes.fun.ascend,
+        funAvg: score.avg,
+        curvyPct: score.curvyPct,
+        path: routes.fun,
+      });
+      setSavedId(id);
+      setSaveName(null);
+      setRefreshKey((k) => k + 1);
+      try {
+        await navigator.clipboard.writeText(shareUrl(id));
+      } catch {
+        /* clipboard non disponibile: il link resta visibile nel pannello */
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Salvataggio fallito');
+    } finally {
+      setSaving(false);
+    }
   };
 
   // hook di test usato solo in sviluppo (verifiche automatiche)
@@ -269,11 +336,41 @@ export default function App() {
           <ElevationChart path={selPath} color={selected === 'fast' && routes.fast ? '#64748b' : '#e8590c'} />
         )}
 
+        {routes.fun && (
+          <div className="save-box">
+            {saveName === null && !savedId && <button onClick={() => setSaveName('')}>💾 Salva giro</button>}
+            {saveName !== null && (
+              <div className="save-form">
+                <input
+                  autoFocus
+                  placeholder="Nome del giro…"
+                  value={saveName}
+                  onChange={(e) => setSaveName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void doSave();
+                    if (e.key === 'Escape') setSaveName(null);
+                  }}
+                />
+                <button disabled={saving || !saveName.trim()} onClick={() => void doSave()}>
+                  {saving ? '…' : 'Salva'}
+                </button>
+              </div>
+            )}
+            {savedId && (
+              <div className="saved-ok">
+                ✓ Salvato, link copiato: <a href={shareUrl(savedId)}>{shareUrl(savedId)}</a>
+              </div>
+            )}
+          </div>
+        )}
+
         {points.length > 0 && (
           <div className="actions">
             <button onClick={reset}>✕ Reimposta</button>
           </div>
         )}
+
+        <SavedRoutes refreshKey={refreshKey} onLoad={loadSaved} />
 
         <footer>dati © OpenStreetMap contributors · routing GraphHopper · tiles OpenFreeMap · ricerca Photon/Komoot</footer>
       </aside>

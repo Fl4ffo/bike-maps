@@ -4,7 +4,9 @@ Web app di navigazione che calcola il percorso più **divertente** (curve, passi
 
 ## Stato attuale — Fase 3: web app funzionante
 
-Frontend React + TypeScript + Vite in `web/`: mappa MapLibre (tiles OpenFreeMap), waypoint multipli con clic (marker trascinabili, tappe rimovibili), **confronto visivo veloce vs divertente**, modalità **Anello** ("giro di ~N km da qui" via `round_trip` con retry automatico sui seed), ricerca località (Photon), selettore **Bilanciato / Max curve**, fun-score 🌀 per percorso, profilo altimetrico, export GPX. Responsive desktop/mobile.
+Frontend React + TypeScript + Vite in `web/`: mappa MapLibre (tiles OpenFreeMap), waypoint multipli con clic (marker trascinabili, tappe rimovibili), **confronto visivo veloce vs divertente**, modalità **Anello** ("giro di ~N km da qui" via `round_trip` con retry automatico sui seed), ricerca località (Photon), selettore **Bilanciato / Max curve**, fun-score 🌀 per percorso, profilo altimetrico, export GPX, **salvataggio e condivisione giri** (SQLite via API, link `/?r=ID` che ripristina il giro — per gli anelli il seed salvato lo rende riproducibile). Responsive desktop/mobile.
+
+In dev servono attivi GraphHopper (`scripts\start-server.ps1`) e l'API (`cd api; npm run dev`): Vite proxa `/gh` e `/api`.
 
 I tre profili su Milano→Varese: veloce 41 min, bilanciato 58 min (1.4×), max curve 76 min (1.9×).
 

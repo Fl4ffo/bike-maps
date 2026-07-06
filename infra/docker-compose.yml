@@ -18,6 +18,9 @@ services:
       dockerfile: infra/api.Dockerfile
     environment:
       - GH_URL=http://graphhopper:8989
+      - BM_DB=/app/data/bikemaps.db
+    volumes:
+      - ../data:/app/data # db dei giri salvati (bikemaps.db), condiviso col grafo
     depends_on:
       - graphhopper
     restart: unless-stopped

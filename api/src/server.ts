@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import Fastify from 'fastify';
 import httpProxy from '@fastify/http-proxy';
 import fastifyStatic from '@fastify/static';
+import { registerRouteEndpoints } from './routes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -39,6 +40,8 @@ app.get('/api/health', async () => {
   }
   return { status: 'ok', graphhopper, profiles };
 });
+
+registerRouteEndpoints(app);
 
 await app.register(httpProxy, {
   upstream: GH_URL,
