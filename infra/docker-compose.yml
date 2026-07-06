@@ -1,0 +1,14 @@
+# Deploy su VPS (fase successiva — non serve in locale, dove GraphHopper gira come JAR).
+# Prerequisito sul server: cartelle ../graphhopper (config + jar + custom_models)
+# e ../data (pbf + graph-cache gia' importato, o importare nel container).
+services:
+  graphhopper:
+    image: eclipse-temurin:21-jre
+    working_dir: /app/graphhopper
+    command: java -Xmx6g -Xms2g -jar graphhopper-web-11.0.jar server config.yml
+    volumes:
+      - ../graphhopper:/app/graphhopper
+      - ../data:/app/data
+    ports:
+      - "8989:8989"
+    restart: unless-stopped

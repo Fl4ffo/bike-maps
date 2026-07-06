@@ -1,0 +1,64 @@
+# GraphHopper 11.0 — configurazione Bike Maps (fase 1: validazione concetto)
+# Eseguire dalla cartella graphhopper/ :
+#   import:  java -Xmx6g -jar graphhopper-web-11.0.jar import config.yml
+#   server:  java -Xmx4g -jar graphhopper-web-11.0.jar server config.yml
+#
+# NOTA: ogni modifica a graph.encoded_values, al PBF o alla lista profili
+# richiede un nuovo import (cancellare prima ../data/graph-cache).
+# Modifiche ai custom model (fast.json, curvy.json) richiedono solo il
+# riavvio del server: nessun profilo ha la preparazione CH in questa fase.
+
+graphhopper:
+  # PBF arricchito dalla pipeline (pipeline/fun_tags.py) con i tag fun:*
+  datareader.file: ../data/nord-ovest-fun.osm.pbf
+  graph.location: ../data/graph-cache
+
+  # Escludi vie non carrabili: grafo piu' piccolo, import piu' veloce
+  import.osm.ignored_highways: footway,construction,cycleway,path,steps,pedestrian,bridleway
+
+  # Encoded values: includere ORA tutto cio' che servira' ai profili,
+  # aggiungerne dopo = re-import completo.
+  # fun_curvature e fun_signals sono EV custom (ext/): l'import DEVE passare da
+  # com.bikemaps.FunScoreImport (scripts/import.ps1), non dal comando standard.
+  graph.encoded_values: car_access, car_average_speed, road_access, road_class, road_class_link, road_environment, max_speed, surface, smoothness, curvature, average_slope, max_slope, urban_density, fun_curvature, fun_signals
+
+  # Necessario per l'encoded value urban_density (0 thread = crash all'import)
+  graph.urban_density.threads: 4
+
+  # Altimetria (DEM SRTM scaricato automaticamente al primo import)
+  graph.elevation.provider: srtm
+  graph.elevation.cache_dir: ../data/elevation-cache
+
+  custom_models.directory: custom_models
+
+  profiles:
+    - name: fast
+      turn_costs:
+        vehicle_types: [motorcar, motor_vehicle]
+      custom_model_files: [fast.json]
+    - name: curvy
+      turn_costs:
+        vehicle_types: [motorcar, motor_vehicle]
+      custom_model_files: [curvy.json]
+
+  # CH disattivata in fase di validazione: con un profilo CH attivo, le query ai
+  # profili flessibili richiedono ch.disable=true (che la UI /maps/ non manda).
+  # Senza CH tutto e' flessibile (~1-2s a query, ok in regione) e OGNI custom
+  # model si modifica con un semplice riavvio. Riattivare in produzione:
+  # profiles_ch:
+  #   - profile: fast
+
+  prepare.min_network_size: 200
+
+server:
+  application_connectors:
+    - type: http
+      port: 8989
+      bind_host: 0.0.0.0   # raggiungibile anche da smartphone sulla LAN
+      max_request_header_size: 50k
+  request_log:
+    appenders: []
+  admin_connectors:
+    - type: http
+      port: 8990
+      bind_host: localhost

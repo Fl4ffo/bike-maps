@@ -1,0 +1,15 @@
+# Dati pesanti e artefatti generati — mai in git
+data/
+graphhopper/*.jar
+graphhopper/ext/classes/
+pipeline/.venv/
+
+# Node / build (per il futuro frontend)
+node_modules/
+dist/
+.env
+.env.*
+
+# OS / editor
+Thumbs.db
+.DS_Store

@@ -1,0 +1,11 @@
+// Profilo "fast": replica del car.json bundled di GraphHopper 11.0.
+// Baseline di confronto per il fun-routing. Ha la preparazione CH: modificarlo richiede re-import.
+{
+  "distance_influence": 90,
+  "priority": [
+    { "if": "!car_access", "multiply_by": "0" }
+  ],
+  "speed": [
+    { "if": "true", "limit_to": "car_average_speed" }
+  ]
+}

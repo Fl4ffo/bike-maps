@@ -1,0 +1,79 @@
+# Bike Maps
+
+Web app di navigazione che calcola il percorso più **divertente** (curve, passi, panorami) invece del più veloce, per moto e auto. Visione completa, architettura e roadmap: [PIANO_PROGETTO.md](PIANO_PROGETTO.md).
+
+## Stato attuale — Fase 3: web app funzionante
+
+Frontend React + TypeScript + Vite in `web/`: mappa MapLibre (tiles OpenFreeMap), clic per partenza/destinazione (marker trascinabili), **confronto visivo veloce vs divertente**, fun-score 🌀 per percorso, profilo altimetrico, export GPX. Responsive desktop/mobile.
+
+```powershell
+cd web; npm install; npm run dev    # http://localhost:5173 (anche da LAN)
+```
+
+Richiede il server GraphHopper attivo (`scripts\start-server.ps1`): il dev server proxa `/gh` → `localhost:8989`.
+
+## Fase 2: pipeline fun-score
+
+Routing engine GraphHopper 11.0 self-hosted su estratto OSM Nord-Ovest Italia (Piemonte, Lombardia, Liguria, Valle d'Aosta), con dati di divertimento **precalcolati da una pipeline Python** e iniettati nel grafo come encoded value custom:
+
+- `fun_curvature` (0-100) — curvatura reale della strada, metodo roadcurvature.com (raggio del cerchio circoscritto per tripla di punti, bucket per raggio) con semplificazione Douglas-Peucker ε=2 m che elimina il jitter GPS delle geometrie OSM
+- `fun_signals` (0-15) — semafori+stop per km
+
+Profili: **fast** (baseline veloce) e **curvy** (penalizza rettilinei via `fun_curvature`, autostrade, urbano, gallerie, semafori, sterrato).
+
+Validazione quantitativa (media di `fun_curvature` pesata sulla distanza, `scripts\fun-report.ps1`): su Torino→Aosta il fast fa 1,3 (A5, 1% km curvi), il curvy 17,9 (SS565 Canavese + SS26, 16% km curvi, +2600 m dislivello). Rapporto tempo curvy/fast ≤ 2×. Campioni noti: Colle San Carlo 58-67, Corso Sempione/Buenos Aires/A4 = 0.
+
+## Requisiti
+
+- Java 21+ (JDK: serve javac per l'estensione)
+- Python 3.11+ (venv in `pipeline\.venv`, dipendenza: pyosmium)
+- ~6 GB liberi su disco, 8+ GB RAM
+
+## Quick start
+
+```powershell
+scripts\download-data.ps1    # scarica PBF Geofabrik + JAR GraphHopper (se mancanti)
+scripts\run-pipeline.ps1     # calcola i tag fun:* -> nord-ovest-fun.osm.pbf (~9 min)
+scripts\import.ps1           # costruisce il grafo con gli EV custom (~3 min)
+scripts\start-server.ps1     # avvia su http://localhost:8989
+scripts\test-routes.ps1      # confronto fast vs curvy sui percorsi di riferimento
+scripts\fun-report.ps1       # fun-score di un percorso (media fun_curvature pesata)
+```
+
+UI mappa con selettore profilo: <http://localhost:8989/maps/>
+
+API di esempio:
+
+```
+GET http://localhost:8989/route?point=45.070,7.686&point=45.737,7.315&profile=curvy&points_encoded=false
+```
+
+## Struttura
+
+```
+web/                      # frontend React+TS+Vite: MapLibre, fun-score, GPX
+pipeline/
+  fun_tags.py             # pipeline fun-score: PBF -> PBF + tag fun:* (curvatura DP, semafori)
+  inspect_scores.py       # ispezione qualitativa degli score su strade note
+graphhopper/
+  config.yml              # config GraphHopper (encoded values, profili, elevazione)
+  custom_models/
+    fast.json             # baseline veloce
+    curvy.json            # profilo divertente — QUI si itera sui pesi
+  ext/src/com/bikemaps/   # estensione Java: EV custom fun_* (import via FunScoreImport)
+data/                     # (gitignored) PBF, graph-cache, tile SRTM
+scripts/                  # download / pipeline / import / avvio / test
+infra/docker-compose.yml  # deploy futuro su VPS
+```
+
+Flusso dati: `nord-ovest.osm.pbf` → pipeline Python (tag `fun:curvature`, `fun:signals`) → `nord-ovest-fun.osm.pbf` → import Java custom (`com.bikemaps.FunScoreImport`, registra gli encoded value) → graph-cache → **server GraphHopper ufficiale invariato** (al load gli EV si ricostruiscono dalle properties della cache).
+
+## Iterare sui pesi del profilo curvy
+
+1. Modifica `graphhopper/custom_models/curvy.json`
+2. Riavvia il server (niente re-import: in questa fase nessun profilo usa CH)
+3. Confronta fast vs curvy con `scripts\test-routes.ps1` e sulla UI su percorsi che conosci
+
+Il re-import serve solo se cambiano: il PBF, `graph.encoded_values` o la lista profili.
+
+Dati © OpenStreetMap contributors (ODbL).
