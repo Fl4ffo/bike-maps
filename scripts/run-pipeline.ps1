@@ -8,4 +8,8 @@ Set-Location $root
 if (-not (Test-Path "data\nord-ovest.osm.pbf")) { throw "PBF mancante: eseguire prima scripts\download-data.ps1" }
 
 & pipeline\.venv\Scripts\python.exe pipeline\fun_tags.py data\nord-ovest.osm.pbf data\nord-ovest-fun.osm.pbf
-Write-Host "Pipeline completata. Prossimo passo: scripts\import.ps1"
+
+Write-Host "Estrazione POI (passi, panorami, benzinai)..."
+& pipeline\.venv\Scripts\python.exe pipeline\extract_pois.py data\nord-ovest.osm.pbf data\pois.json
+
+Write-Host "Pipeline completata. Prossimo passo: scripts\import.ps1 (e riavvio API per ricaricare i POI)"

@@ -15,6 +15,7 @@ import Fastify from 'fastify';
 import httpProxy from '@fastify/http-proxy';
 import fastifyStatic from '@fastify/static';
 import { registerRouteEndpoints } from './routes.js';
+import { registerPoiEndpoints } from './pois.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -42,6 +43,7 @@ app.get('/api/health', async () => {
 });
 
 registerRouteEndpoints(app);
+registerPoiEndpoints(app);
 
 await app.register(httpProxy, {
   upstream: GH_URL,

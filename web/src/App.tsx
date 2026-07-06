@@ -4,6 +4,8 @@ import type { FunProfileId, LngLat, RoutePath } from './api';
 import { downloadGpx } from './gpx';
 import { computeFunScore } from './score';
 import { getRoute, saveRoute, shareUrl } from './saved';
+import { POI_META, poisAlong } from './poi';
+import type { Poi, PoiType } from './poi';
 import MapView from './components/MapView';
 import RoutePanel from './components/RoutePanel';
 import ElevationChart from './components/ElevationChart';
@@ -47,7 +49,10 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [pois, setPois] = useState<Poi[] | null>(null);
+  const [poiTypes, setPoiTypes] = useState<Set<PoiType>>(() => new Set(['pass', 'viewpoint', 'fuel']));
   const abortRef = useRef<AbortController | null>(null);
+  const poisAbortRef = useRef<AbortController | null>(null);
 
   const addPoint = useCallback(
     (p: LngLat) => {
@@ -137,6 +142,31 @@ export default function App() {
         if (!ctrl.signal.aborted) setLoading(false);
       });
   }, [mode, points, funProfile, loopKm, seed]);
+
+  // POI lungo il percorso divertente corrente
+  useEffect(() => {
+    poisAbortRef.current?.abort();
+    if (!routes.fun) {
+      setPois(null);
+      return;
+    }
+    const ctrl = new AbortController();
+    poisAbortRef.current = ctrl;
+    poisAlong(routes.fun, ctrl.signal)
+      .then(setPois)
+      .catch(() => {
+        if (!ctrl.signal.aborted) setPois([]);
+      });
+  }, [routes.fun]);
+
+  const togglePoiType = (t: PoiType) => {
+    setPoiTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
+  };
 
   const reset = () => {
     abortRef.current?.abort();
@@ -228,6 +258,7 @@ export default function App() {
         loop={mode === 'loop'}
         baseline={routes.fast}
         fun={routes.fun}
+        pois={(pois ?? []).filter((p) => poiTypes.has(p.type))}
         onMapClick={addPoint}
         onMovePoint={movePoint}
       />
@@ -334,6 +365,39 @@ export default function App() {
 
         {selPath && routes.fun && (
           <ElevationChart path={selPath} color={selected === 'fast' && routes.fast ? '#64748b' : '#e8590c'} />
+        )}
+
+        {routes.fun && pois && pois.length > 0 && (
+          <div className="pois">
+            <div className="poi-toggles">
+              {(Object.keys(POI_META) as PoiType[]).map((t) => {
+                const count = pois.filter((p) => p.type === t).length;
+                return (
+                  <button
+                    key={t}
+                    className={poiTypes.has(t) ? 'on' : ''}
+                    disabled={count === 0}
+                    onClick={() => togglePoiType(t)}
+                    title={POI_META[t].label}
+                  >
+                    {POI_META[t].icon} {count}
+                  </button>
+                );
+              })}
+            </div>
+            {poiTypes.has('pass') && (
+              <ul className="pass-list">
+                {pois
+                  .filter((p) => p.type === 'pass' && p.name)
+                  .map((p) => (
+                    <li key={p.id}>
+                      ⛰️ {p.name}
+                      {p.ele ? ` (${p.ele} m)` : ''} · km {p.alongKm.toFixed(0)}
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
         )}
 
         {routes.fun && (

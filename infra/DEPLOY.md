@@ -24,6 +24,7 @@ curl -SL -o graphhopper/graphhopper-web-11.0.jar \
 # dal PC locale: carica il grafo già importato (~0.5 GB) e il PBF arricchito
 rsync -avz --progress data/graph-cache/ user@server:~/bike_maps/data/graph-cache/
 rsync -avz --progress data/nord-ovest-fun.osm.pbf user@server:~/bike_maps/data/
+rsync -avz --progress data/pois.json user@server:~/bike_maps/data/   # POI (passi/panorami/benzinai)
 ```
 
 (In alternativa si esegue pipeline + import sul server: servono 16 GB RAM,

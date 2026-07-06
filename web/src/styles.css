@@ -331,6 +331,59 @@ body,
   cursor: default;
 }
 
+.pois {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.poi-toggles {
+  display: flex;
+  gap: 6px;
+}
+
+.poi-toggles button {
+  flex: 1;
+  padding: 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0.45;
+}
+
+.poi-toggles button.on {
+  opacity: 1;
+  border-color: #64748b;
+}
+
+.poi-toggles button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.pass-list {
+  margin: 0;
+  padding: 8px 10px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #334155;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.poi-popup {
+  font-family: system-ui, sans-serif;
+  font-size: 12.5px;
+}
+
 .save-box button,
 .save-form button {
   padding: 8px 12px;
