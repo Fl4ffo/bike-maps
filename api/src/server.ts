@@ -19,7 +19,10 @@ import { registerPoiEndpoints } from './pois.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const PORT = Number(process.env.PORT ?? 3000);
+// 8790 e non 3000: la 3000 e' la default di mezzo ecosistema Node e sul PC
+// di sviluppo e' contesa da altri progetti (l'API e' gia' stata uccisa una
+// volta da un kill-by-port altrui)
+const PORT = Number(process.env.PORT ?? 8790);
 const HOST = process.env.HOST ?? '0.0.0.0';
 const GH_URL = process.env.GH_URL ?? 'http://localhost:8989';
 const WEB_DIST = process.env.WEB_DIST ?? path.resolve(__dirname, '../../web/dist');

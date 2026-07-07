@@ -24,7 +24,7 @@ Richiede il server GraphHopper attivo (`scripts\start-server.ps1`): il dev serve
 
 ```powershell
 cd web; npm run build     # frontend statico in web/dist
-cd ..\api; npm install; npm run build; npm start    # tutto su http://localhost:3000
+cd ..\api; npm install; npm run build; npm start    # tutto su http://localhost:8790
 ```
 
 Deploy su VPS (Docker Compose + Caddy con TLS automatico): [infra/DEPLOY.md](infra/DEPLOY.md).
@@ -89,7 +89,7 @@ Flusso dati: `nord-ovest.osm.pbf` → pipeline Python (tag `fun:curvature`, `fun
 ## Iterare sui pesi dei profili
 
 1. Modifica `graphhopper/custom_models/curvy.json` (o `balanced.json`)
-2. Riesegui `scripts\import.ps1` (~3 min: GraphHopper salva i profili nel graph-cache, un custom model modificato richiede il re-import) e riavvia il server
+2. Riesegui `scripts\import.ps1` (~30 min con LM; GraphHopper salva i profili nel graph-cache, un custom model modificato richiede il re-import — per iterare in fretta commenta `profiles_lm` in config.yml) e riavvia il server
 3. Confronta i profili con `scripts\test-routes.ps1` e sulla UI su percorsi che conosci
 
 Dati © OpenStreetMap contributors (ODbL).

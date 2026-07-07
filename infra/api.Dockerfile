@@ -22,5 +22,5 @@ RUN npm ci --omit=dev --no-fund --no-audit
 COPY --from=apibuild /src/api/dist ./dist
 COPY --from=webbuild /src/web/dist ./web-dist
 ENV WEB_DIST=/app/web-dist
-EXPOSE 3000
+EXPOSE 8790
 CMD ["node", "dist/server.js"]

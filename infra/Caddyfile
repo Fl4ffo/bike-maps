@@ -4,5 +4,5 @@
 # e rinnova il certificato Let's Encrypt da solo.
 :80 {
 	encode zstd gzip
-	reverse_proxy api:3000
+	reverse_proxy api:8790
 }

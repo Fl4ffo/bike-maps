@@ -16,13 +16,13 @@ if (Test-Port 8989) {
     Write-Host "GraphHopper in avvio su :8989 (il grafo Italia carica in ~1-2 min)"
 }
 
-if (Test-Port 3000) {
-    Write-Host "API gia' attiva (:3000)"
+if (Test-Port 8790) {
+    Write-Host "API gia' attiva (:8790)"
 } else {
     if (-not (Test-Path (Join-Path $root "api\dist\server.js"))) { throw "API non compilata: cd api; npm run build" }
     Start-Process -WindowStyle Hidden -WorkingDirectory (Join-Path $root "api") node -ArgumentList "dist/server.js"
-    Write-Host "API in avvio su :3000"
+    Write-Host "API in avvio su :8790"
 }
 
 Write-Host ""
-Write-Host "App: http://localhost:3000  (dev con hot-reload: cd web; npm run dev)"
+Write-Host "App: http://localhost:8790  (dev con hot-reload: cd web; npm run dev)"
