@@ -61,10 +61,7 @@ export function isRetryableRoundTripError(msg: string): boolean {
 
 export function friendlyError(msg: string): string {
   if (msg.includes('Cannot find point')) {
-    return (
-      'Punto fuori dall’area coperta (Nord-Ovest Italia: Piemonte, Lombardia, ' +
-      'Liguria, Valle d’Aosta). Spostalo su una strada dentro la regione.'
-    );
+    return 'Punto fuori dall’area coperta (Italia). Spostalo su una strada dentro i confini.';
   }
   if (isRetryableRoundTripError(msg)) {
     return (

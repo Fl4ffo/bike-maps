@@ -5,7 +5,7 @@ services:
   graphhopper:
     image: eclipse-temurin:21-jre
     working_dir: /app/graphhopper
-    command: java -Xmx4g -Xms1g -jar graphhopper-web-11.0.jar server config.yml
+    command: java -Xmx6g -Xms2g -jar graphhopper-web-11.0.jar server config.yml # Italia+LM: 6 GB
     volumes:
       - ../graphhopper:/app/graphhopper
       - ../data:/app/data

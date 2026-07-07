@@ -17,11 +17,11 @@ App di routing "divertente" per moto/auto (curve > velocità). **Leggere [PIANO_
 
 - Windows 11, Java 21 (no Docker installato), PowerShell
 - GraphHopper gira come JAR locale: `scripts\import.ps1` poi `scripts\start-server.ps1` → http://localhost:8989 (UI: /maps/)
-- RAM 16 GB: heap import -Xmx6g, server -Xmx4g
+- **Copertura: ITALIA intera** (dal 2026-07-07): grafo ~8M nodi, prep **LM** per i 3 profili (Milano→Roma curvy in ~1,5 s). Import: heap 9 GB, ~26 min, FERMARE il server prima (RAM). Server: heap 6 GB. Pipeline Italia ~43 min. 37.152 POI (4.502 passi).
 
 ## Regole operative critiche
 
-1. **Re-import del grafo** (`scripts\import.ps1`, ~3 min) necessario se cambiano: il PBF arricchito (cioè dopo ogni `run-pipeline.ps1`), `graph.encoded_values` in config.yml, la lista profili O un custom model (vedi regola 2). Lo script cancella da solo `data\graph-cache`. L'import DEVE usare `com.bikemaps.FunScoreImport` (lo fa import.ps1), MAI il comando `import` standard del jar: non conosce gli EV custom. Il SERVER invece è il jar ufficiale invariato: al load ricostruisce gli EV dalle properties della cache (`EncodingManager.fromProperties`), nessun classpath extra.
+1. **Re-import del grafo** (`scripts\import.ps1`, ~30 min con l'Italia+LM) necessario se cambiano: il PBF arricchito (cioè dopo ogni `run-pipeline.ps1`), `graph.encoded_values` in config.yml, la lista profili O un custom model (vedi regola 2). La prep LM è inclusa e domina il tempo: per iterare velocemente sui pesi si può commentare `profiles_lm` in config.yml (query lente ma import ~10 min). Lo script cancella da solo `data\graph-cache`. L'import DEVE usare `com.bikemaps.FunScoreImport` (lo fa import.ps1), MAI il comando `import` standard del jar: non conosce gli EV custom. Il SERVER invece è il jar ufficiale invariato: al load ricostruisce gli EV dalle properties della cache (`EncodingManager.fromProperties`), nessun classpath extra.
 1b. **Pipeline** (`scripts\run-pipeline.ps1`, ~9 min): da rieseguire se cambia il PBF sorgente o la logica di `pipeline/fun_tags.py`. Dopo la pipeline serve sempre il re-import. Validare sempre con `pipeline/inspect_scores.py` su strade note (Colle San Carlo deve stare ≥55, Corso Sempione/Buenos Aires/A4 a 0) prima di importare.
 2. **Modifica ai custom model dei profili serviti = RE-IMPORT** (scoperto 2026-07-06: GH 11 salva i profili, custom model inclusi, nelle properties del grafo all'import e al load fallisce con "Profiles do not match" se la config differisce). Il re-import costa solo ~3 min. Per pesi *per-richiesta* senza re-import la strada è il `custom_model` nel body POST /route sopra un profilo base (da verificare le regole di merge) — è anche la via per lo slider continuo. Nessun profilo ha la prep CH: se si riattiva `profiles_ch`, le query flessibili richiedono `ch.disable=true` (la UI /maps/ non lo manda → 400).
 3. Nei custom model usare **solo penalità** (`multiply_by` ≤ 1), mai bonus: il fun è uno sconto sul costo, altrimenti il routing degenera in loop. Vale anche per la futura pipeline.
@@ -30,10 +30,13 @@ App di routing "divertente" per moto/auto (curve > velocità). **Leggere [PIANO_
 6. Metrica di guardia quando si toccano i pesi: rapporto tempo_curvy/tempo_fast su percorsi di riferimento (`scripts\test-routes.ps1`) — se supera ~2× il profilo sta degenerando.
 7. Gotcha noti GraphHopper 11.0: l'encoded value `urban_density` richiede `graph.urban_density.threads >= 1` in config, altrimenti l'import crasha con IllegalArgumentException su ForkJoinPool; l'estratto Geofabrik contiene rotte traghetto da Genova → il DEM scarica anche tile africani/spagnoli (innocuo).
 
-## Percorsi di riferimento per i test (Nord-Ovest)
+## Percorsi di riferimento per i test
 
 - Torino (45.070,7.686) → Aosta (45.737,7.315): fast deve prendere A5, curvy deve preferire SS26/valli laterali
-- Bormio (46.466,10.370) → Ponte di Legno (46.259,10.510): curvy deve passare dal Passo Gavia
+- Bormio (46.466,10.370) → Ponte di Legno (46.259,10.510): curvy deve passare dal Passo Gavia (POI: "Passo di Gavia 2621 m")
+- Firenze (43.769,11.256) → Siena (43.319,11.331): curvy via Chianti, ~44% km curvi, 🌀40 vs 🌀5 del fast
+- L'Aquila (42.350,13.400) → Teramo (42.659,13.704): curvy via SS80, POI "Valico delle Capannelle 1300 m"
+- Milano (45.464,9.190) → Roma (41.902,12.496) curvy: benchmark LM, deve rispondere in ~1-3 s
 - API: `GET /route?point=LAT,LON&point=LAT,LON&profile=curvy&points_encoded=false`
 
 ## Prossimo lavoro (roadmap punto 3)

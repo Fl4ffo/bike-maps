@@ -2,10 +2,10 @@
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
 
-$pbf = Join-Path $root "data\nord-ovest.osm.pbf"
+$pbf = Join-Path $root "data\italy.osm.pbf"
 if (-not (Test-Path $pbf)) {
-    Write-Host "Scarico estratto OSM Nord-Ovest Italia (~500 MB)..."
-    curl.exe -SL --retry 3 -o $pbf https://download.geofabrik.de/europe/italy/nord-ovest-latest.osm.pbf
+    Write-Host "Scarico estratto OSM Italia (~2 GB)..."
+    curl.exe -SL --retry 3 -o $pbf https://download.geofabrik.de/europe/italy-latest.osm.pbf
 } else { Write-Host "PBF gia' presente: $pbf" }
 
 $jar = Join-Path $root "graphhopper\graphhopper-web-11.0.jar"

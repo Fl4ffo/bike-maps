@@ -4,8 +4,8 @@ Stack: Caddy (TLS automatico) → API Fastify (frontend statico + proxy `/gh`) �
 
 ## 1. Server
 
-- **Hetzner CX32 o CPX31** (4 vCPU, 8 GB RAM, ~9 €/mese): basta per servire il Nord-Ovest (il serving usa molta meno RAM dell'import; `-Xmx4g` è già impostato nel compose).
-- Per l'Italia intera o per fare import/pipeline direttamente sul server: 16 GB (CX42/CPX41).
+- **Hetzner CX42 o CPX41** (8 vCPU, 16 GB RAM, ~17 €/mese): necessario per servire l'Italia intera con LM (heap 6 GB, già impostato nel compose).
+- Import/pipeline direttamente sul server: sconsigliato sotto i 16 GB; meglio preparare in locale e caricare con rsync (graph-cache ~2,5 GB).
 - OS: Ubuntu 24.04. Docker: `curl -fsSL https://get.docker.com | sh`.
 - Firewall: `ufw allow 22,80,443/tcp && ufw enable`.
 
@@ -23,7 +23,7 @@ curl -SL -o graphhopper/graphhopper-web-11.0.jar \
 
 # dal PC locale: carica il grafo già importato (~0.5 GB) e il PBF arricchito
 rsync -avz --progress data/graph-cache/ user@server:~/bike_maps/data/graph-cache/
-rsync -avz --progress data/nord-ovest-fun.osm.pbf user@server:~/bike_maps/data/
+rsync -avz --progress data/italy-fun.osm.pbf user@server:~/bike_maps/data/
 rsync -avz --progress data/pois.json user@server:~/bike_maps/data/   # POI (passi/panorami/benzinai)
 ```
 

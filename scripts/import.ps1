@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location (Join-Path $root "graphhopper")
 
-if (-not (Test-Path "..\data\nord-ovest-fun.osm.pbf")) { throw "PBF arricchito mancante: eseguire prima scripts\run-pipeline.ps1" }
+if (-not (Test-Path "..\data\italy-fun.osm.pbf")) { throw "PBF arricchito mancante: eseguire prima scripts\run-pipeline.ps1" }
 
 # ricompila l'estensione se serve
 if (-not (Test-Path "ext\classes\com\bikemaps\FunScoreImport.class")) {
@@ -20,5 +20,6 @@ if (Test-Path "..\data\graph-cache") {
     Remove-Item -Recurse -Force "..\data\graph-cache"
 }
 
-java -Xmx6g -Xms2g -cp "graphhopper-web-11.0.jar;ext/classes" com.bikemaps.FunScoreImport config.yml
+# Italia intera + prep LM: servono ~8-9 GB di heap. Fermare il server prima.
+java -Xmx9g -Xms4g -cp "graphhopper-web-11.0.jar;ext/classes" com.bikemaps.FunScoreImport config.yml
 Write-Host "Import completato. Avviare con scripts\start-server.ps1"

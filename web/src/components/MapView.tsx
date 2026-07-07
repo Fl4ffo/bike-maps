@@ -54,8 +54,8 @@ export default function MapView({ points, loop, baseline, fun, pois, onMapClick,
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: STYLE_URL,
-      center: [7.9, 45.35], // Nord-Ovest Italia, l'area coperta dal grafo
-      zoom: 7.2,
+      center: [12.0, 42.5], // Italia, l'area coperta dal grafo
+      zoom: 5.4,
     });
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), 'top-left');
     map.addControl(

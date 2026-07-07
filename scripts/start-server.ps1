@@ -7,4 +7,5 @@ Set-Location (Join-Path $root "graphhopper")
 
 if (-not (Test-Path "..\data\graph-cache")) { throw "Grafo mancante: eseguire prima scripts\import.ps1" }
 
-java -Xmx4g -Xms1g -jar graphhopper-web-11.0.jar server config.yml
+# Italia intera con LM caricati in RAM: 6 GB di heap
+java -Xmx6g -Xms2g -jar graphhopper-web-11.0.jar server config.yml

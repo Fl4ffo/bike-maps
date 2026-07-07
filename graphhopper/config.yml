@@ -10,7 +10,7 @@
 
 graphhopper:
   # PBF arricchito dalla pipeline (pipeline/fun_tags.py) con i tag fun:*
-  datareader.file: ../data/nord-ovest-fun.osm.pbf
+  datareader.file: ../data/italy-fun.osm.pbf
   graph.location: ../data/graph-cache
 
   # Escludi vie non carrabili: grafo piu' piccolo, import piu' veloce
@@ -45,12 +45,14 @@ graphhopper:
         vehicle_types: [motorcar, motor_vehicle]
       custom_model_files: [balanced.json]
 
-  # CH disattivata in fase di validazione: con un profilo CH attivo, le query ai
-  # profili flessibili richiedono ch.disable=true (che la UI /maps/ non manda).
-  # Senza CH tutto e' flessibile (~1-2s a query, ok in regione) e OGNI custom
-  # model si modifica con un semplice riavvio. Riattivare in produzione:
-  # profiles_ch:
-  #   - profile: fast
+  # LM (landmarks) per tutti i profili: a scala nazionale il flessibile puro
+  # non regge le tratte lunghe; gli LM danno query 10-50x piu' veloci
+  # mantenendo i custom model. CH resta spenta (vincolerebbe i profili senza
+  # possibilita' di ch.disable dalla UI /maps/).
+  profiles_lm:
+    - profile: fast
+    - profile: curvy
+    - profile: balanced
 
   prepare.min_network_size: 200
 

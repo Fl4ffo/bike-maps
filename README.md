@@ -2,7 +2,11 @@
 
 Web app di navigazione che calcola il percorso più **divertente** (curve, passi, panorami) invece del più veloce, per moto e auto. Visione completa, architettura e roadmap: [PIANO_PROGETTO.md](PIANO_PROGETTO.md).
 
-## Stato attuale — Fase 3: web app funzionante
+## Stato attuale — copertura ITALIA intera
+
+Grafo nazionale (~8 M nodi) con preparazione **LM (landmarks)** per i tre profili: query veloci anche su tratte lunghe (Milano→Roma curvy: 719 km calcolati in ~1,5 s). Pipeline fun-score su 3 M di strade, 37.152 POI (4.502 passi).
+
+## Fase 3: web app funzionante
 
 Frontend React + TypeScript + Vite in `web/`: mappa MapLibre (tiles OpenFreeMap), waypoint multipli con clic (marker trascinabili, tappe rimovibili), **confronto visivo veloce vs divertente**, modalità **Anello** ("giro di ~N km da qui" via `round_trip` con retry automatico sui seed), ricerca località (Photon), selettore **Bilanciato / Max curve**, fun-score 🌀 per percorso, profilo altimetrico, export GPX, **salvataggio e condivisione giri** (SQLite via API, link `/?r=ID` che ripristina il giro — per gli anelli il seed salvato lo rende riproducibile), **POI lungo il percorso** (⛰️ passi con quota e km, 🌄 panorami, ⛽ benzinai — estratti dal PBF, filtrati entro 600 m dal tracciato con indice spaziale a griglia). Responsive desktop/mobile.
 
@@ -27,7 +31,7 @@ Deploy su VPS (Docker Compose + Caddy con TLS automatico): [infra/DEPLOY.md](inf
 
 ## Fase 2: pipeline fun-score
 
-Routing engine GraphHopper 11.0 self-hosted su estratto OSM Nord-Ovest Italia (Piemonte, Lombardia, Liguria, Valle d'Aosta), con dati di divertimento **precalcolati da una pipeline Python** e iniettati nel grafo come encoded value custom:
+Routing engine GraphHopper 11.0 self-hosted su estratto OSM Italia, con dati di divertimento **precalcolati da una pipeline Python** e iniettati nel grafo come encoded value custom:
 
 - `fun_curvature` (0-100) — curvatura reale della strada, metodo roadcurvature.com (raggio del cerchio circoscritto per tripla di punti, bucket per raggio) con semplificazione Douglas-Peucker ε=2 m che elimina il jitter GPS delle geometrie OSM
 - `fun_signals` (0-15) — semafori+stop per km
@@ -40,14 +44,14 @@ Validazione quantitativa (media di `fun_curvature` pesata sulla distanza, `scrip
 
 - Java 21+ (JDK: serve javac per l'estensione)
 - Python 3.11+ (venv in `pipeline\.venv`, dipendenza: pyosmium)
-- ~6 GB liberi su disco, 8+ GB RAM
+- ~10 GB liberi su disco, **16 GB RAM** (import Italia: heap 9 GB; server: 6 GB)
 
 ## Quick start
 
 ```powershell
-scripts\download-data.ps1    # scarica PBF Geofabrik + JAR GraphHopper (se mancanti)
-scripts\run-pipeline.ps1     # calcola i tag fun:* -> nord-ovest-fun.osm.pbf (~9 min)
-scripts\import.ps1           # costruisce il grafo con gli EV custom (~3 min)
+scripts\download-data.ps1    # scarica PBF Italia (~2 GB) + JAR GraphHopper (se mancanti)
+scripts\run-pipeline.ps1     # tag fun:* + POI -> italy-fun.osm.pbf (~45 min)
+scripts\import.ps1           # grafo con EV custom + prep LM (~30 min, fermare prima il server)
 scripts\start-server.ps1     # avvia su http://localhost:8989
 scripts\test-routes.ps1      # confronto fast vs curvy sui percorsi di riferimento
 scripts\fun-report.ps1       # fun-score di un percorso (media fun_curvature pesata)
