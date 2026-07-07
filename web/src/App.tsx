@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import { fetchRoute, friendlyError, isRetryableRoundTripError } from './api';
 import type { FunProfileId, LngLat, RoutePath } from './api';
 import { downloadGpx } from './gpx';
@@ -50,6 +51,7 @@ export default function App() {
   const [savedId, setSavedId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [pois, setPois] = useState<Poi[] | null>(null);
+  const [hoverPoint, setHoverPoint] = useState<[number, number] | null>(null);
   const [poiTypes, setPoiTypes] = useState<Set<PoiType>>(() => new Set(['pass', 'viewpoint', 'fuel']));
   const abortRef = useRef<AbortController | null>(null);
   const poisAbortRef = useRef<AbortController | null>(null);
@@ -259,6 +261,7 @@ export default function App() {
         baseline={routes.fast}
         fun={routes.fun}
         pois={(pois ?? []).filter((p) => poiTypes.has(p.type))}
+        hoverPoint={hoverPoint}
         onMapClick={addPoint}
         onMovePoint={movePoint}
       />
@@ -341,7 +344,7 @@ export default function App() {
         {loading && <div className="loading">Calcolo percorsi…</div>}
 
         {routes.fun && (
-          <div className="cards">
+          <motion.div className="cards" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
             <RoutePanel
               title={mode === 'loop' ? `Anello ${FUN_LABEL[funProfile].toLowerCase()}` : FUN_LABEL[funProfile]}
               kind="fun"
@@ -360,11 +363,29 @@ export default function App() {
                 onGpx={() => downloadGpx(routes.fast as RoutePath, 'bikemaps-veloce')}
               />
             )}
+          </motion.div>
+        )}
+
+        {routes.fun && (
+          <div className="fun-legend" title="Colore del tracciato: fun_curvature">
+            <div className="fun-legend-bar" />
+            <div className="fun-legend-labels">
+              <span>rettilineo</span>
+              <span>curve</span>
+              <span>tornanti</span>
+            </div>
           </div>
         )}
 
         {selPath && routes.fun && (
-          <ElevationChart path={selPath} color={selected === 'fast' && routes.fast ? '#64748b' : '#e8590c'} />
+          <ElevationChart
+            path={selPath}
+            color={selected === 'fast' && routes.fast ? '#64748b' : '#e8590c'}
+            onHover={(idx) => {
+              const c = selPath.points.coordinates;
+              setHoverPoint(idx != null && c[idx] ? [c[idx][0], c[idx][1]] : null);
+            }}
+          />
         )}
 
         {routes.fun && pois && pois.length > 0 && (

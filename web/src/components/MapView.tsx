@@ -13,8 +13,36 @@ interface Props {
   baseline: RoutePath | null; // percorso veloce (grigio, sotto)
   fun: RoutePath | null; // percorso divertente (arancione, sopra)
   pois: Poi[]; // già filtrati per categoria visibile
+  hoverPoint: [number, number] | null; // sync hover dal profilo altimetrico
   onMapClick: (p: LngLat) => void;
   onMovePoint: (index: number, p: LngLat) => void;
+}
+
+/** Rampa freddo→caldo per fun_curvature (usata anche dalla legenda CSS). */
+export const FUN_RAMP: [number, string][] = [
+  [0, '#8894a5'],
+  [30, '#f4b942'],
+  [60, '#ee7214'],
+  [90, '#d63031'],
+];
+
+/** Il percorso fun spezzato per intervalli di fun_curvature: ogni segmento
+ *  porta il proprio valore e MapLibre lo colora con la rampa. */
+function funFeatures(path: RoutePath | null): unknown {
+  if (!path) return EMPTY;
+  const coords = path.points.coordinates;
+  const details = path.details?.fun_curvature ?? [];
+  if (details.length === 0) {
+    return { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { fun: 0 }, geometry: { type: 'LineString', coordinates: coords } }] };
+  }
+  return {
+    type: 'FeatureCollection',
+    features: details.map(([from, to, val]) => ({
+      type: 'Feature',
+      properties: { fun: val ?? 0 },
+      geometry: { type: 'LineString', coordinates: coords.slice(from, to + 1) },
+    })),
+  };
 }
 
 function esc(s: string): string {
@@ -36,7 +64,7 @@ function markerColor(index: number, count: number, loop: boolean): string {
   return '#1d6fa5'; // tappa intermedia
 }
 
-export default function MapView({ points, loop, baseline, fun, pois, onMapClick, onMovePoint }: Props) {
+export default function MapView({ points, loop, baseline, fun, pois, hoverPoint, onMapClick, onMovePoint }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
@@ -73,9 +101,24 @@ export default function MapView({ points, loop, baseline, fun, pois, onMapClick,
           paint:
             id === 'baseline'
               ? { 'line-color': '#64748b', 'line-width': 4, 'line-opacity': 0.75 }
-              : { 'line-color': '#e8590c', 'line-width': 5, 'line-opacity': 0.9 },
+              : {
+                  'line-color': [
+                    'interpolate', ['linear'], ['get', 'fun'],
+                    ...FUN_RAMP.flat(),
+                  ] as never,
+                  'line-width': 5,
+                  'line-opacity': 0.95,
+                },
         });
       }
+
+      map.addSource('hover-pt', { type: 'geojson', data: EMPTY as never });
+      map.addLayer({
+        id: 'hover-pt',
+        type: 'circle',
+        source: 'hover-pt',
+        paint: { 'circle-radius': 7, 'circle-color': '#1e293b', 'circle-stroke-width': 2.5, 'circle-stroke-color': '#ffffff' },
+      });
 
       map.addSource('pois', { type: 'geojson', data: EMPTY as never });
       map.addLayer({
@@ -151,6 +194,16 @@ export default function MapView({ points, loop, baseline, fun, pois, onMapClick,
     });
   }, [points, loop]);
 
+  // pallino sulla mappa in corrispondenza dell'hover sul profilo altimetrico
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const data = hoverPoint
+      ? { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: hoverPoint } }
+      : EMPTY;
+    (map.getSource('hover-pt') as GeoJSONSource | undefined)?.setData(data as never);
+  }, [hoverPoint, ready]);
+
   // sincronizza il layer POI
   useEffect(() => {
     const map = mapRef.current;
@@ -171,7 +224,7 @@ export default function MapView({ points, loop, baseline, fun, pois, onMapClick,
     const map = mapRef.current;
     if (!map || !ready) return;
     (map.getSource('route-baseline') as GeoJSONSource | undefined)?.setData(toFeature(baseline) as never);
-    (map.getSource('route-fun') as GeoJSONSource | undefined)?.setData(toFeature(fun) as never);
+    (map.getSource('route-fun') as GeoJSONSource | undefined)?.setData(funFeatures(fun) as never);
 
     const has = Boolean(baseline || fun);
     if (has && !hadRoutes.current) {
