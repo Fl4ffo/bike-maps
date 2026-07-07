@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { fetchRoute, friendlyError, isRetryableRoundTripError } from './api';
-import type { FunProfileId, LngLat, RoutePath } from './api';
+import type { LngLat, RoutePath } from './api';
+import { sliderToModel } from './slider';
 import { downloadGpx } from './gpx';
 import { computeFunScore } from './score';
 import { getRoute, saveRoute, shareUrl } from './saved';
@@ -21,7 +22,13 @@ interface Routes {
 }
 
 const NO_ROUTES: Routes = { fast: null, fun: null };
-const FUN_LABEL: Record<FunProfileId, string> = { balanced: 'Bilanciato', curvy: 'Max curve' };
+
+function funLabel(k: number): string {
+  if (k < 25) return 'Quasi diretto';
+  if (k < 60) return 'Bilanciato';
+  if (k < 90) return 'Divertente';
+  return 'Max curve';
+}
 const LOOP_KMS = [50, 80, 120, 180, 250];
 const RT_RETRIES = 4;
 
@@ -39,7 +46,8 @@ function pointLabel(i: number, count: number, loop: boolean): string {
 export default function App() {
   const [mode, setMode] = useState<Mode>('ab');
   const [points, setPoints] = useState<LngLat[]>([]);
-  const [funProfile, setFunProfile] = useState<FunProfileId>('curvy');
+  const [funLevel, setFunLevel] = useState(75); // slider 0=diretto, 100=max curve
+  const [uiLevel, setUiLevel] = useState(75); // valore durante il drag (commit al rilascio)
   const [loopKm, setLoopKm] = useState(120);
   const [seed, setSeed] = useState(newSeed);
   const [routes, setRoutes] = useState<Routes>(NO_ROUTES);
@@ -96,10 +104,11 @@ export default function App() {
     setSavedId(null); // il giro visualizzato è cambiato: il link salvato non lo rappresenta più
 
     (async () => {
+      const model = sliderToModel(funLevel);
       if (canAb) {
         const [fast, fun] = await Promise.all([
           fetchRoute('fast', points, {}, ctrl.signal),
-          fetchRoute(funProfile, points, {}, ctrl.signal),
+          fetchRoute('slider_base', points, { customModel: model }, ctrl.signal),
         ]);
         return { fast, fun };
       }
@@ -113,9 +122,9 @@ export default function App() {
       for (let attempt = 0; attempt < RT_RETRIES; attempt++) {
         try {
           const fun = await fetchRoute(
-            funProfile,
+            'slider_base',
             points,
-            { roundTrip: { distanceKm: loopKm, seed: seed + attempt * 7919 } },
+            { roundTrip: { distanceKm: loopKm, seed: seed + attempt * 7919 }, customModel: model },
             ctrl.signal,
           );
           const km = fun.distance / 1000;
@@ -143,7 +152,7 @@ export default function App() {
       .finally(() => {
         if (!ctrl.signal.aborted) setLoading(false);
       });
-  }, [mode, points, funProfile, loopKm, seed]);
+  }, [mode, points, funLevel, loopKm, seed]);
 
   // POI lungo il percorso divertente corrente
   useEffect(() => {
@@ -187,7 +196,10 @@ export default function App() {
     getRoute(id)
       .then((rec) => {
         setMode(rec.mode);
-        setFunProfile(rec.funProfile);
+        // v1: il DB memorizza solo balanced/curvy → mappa sul livello slider
+        const lvl = rec.funProfile === 'curvy' ? 100 : 50;
+        setFunLevel(lvl);
+        setUiLevel(lvl);
         if (rec.mode === 'loop') {
           setLoopKm(rec.loopKm ?? 120);
           if (rec.seed != null) setSeed(rec.seed);
@@ -211,7 +223,9 @@ export default function App() {
       const id = await saveRoute({
         name: saveName.trim(),
         mode,
-        funProfile,
+        // v1: lo schema accetta solo balanced/curvy (CHECK SQLite); il livello
+        // esatto dello slider si perde nel salvataggio — migrazione futura
+        funProfile: funLevel >= 50 ? 'curvy' : 'balanced',
         points,
         loopKm: mode === 'loop' ? loopKm : undefined,
         seed: mode === 'loop' ? seed : undefined,
@@ -244,14 +258,17 @@ export default function App() {
         setPoints,
         setMode: switchMode,
         setLoopKm,
-        setFunProfile,
+        setFunLevel: (k: number) => {
+          setFunLevel(k);
+          setUiLevel(k);
+        },
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const selPath = routes[selected] ?? routes.fun;
-  const gpxName = mode === 'loop' ? 'bikemaps-anello' : `bikemaps-${FUN_LABEL[funProfile].toLowerCase().replace(' ', '-')}`;
+  const gpxName = mode === 'loop' ? 'bikemaps-anello' : 'bikemaps-divertente';
 
   return (
     <div className="app">
@@ -306,13 +323,26 @@ export default function App() {
           </div>
         )}
 
-        <div className="segmented fun-choice">
-          <button className={funProfile === 'balanced' ? 'on' : ''} onClick={() => setFunProfile('balanced')}>
-            Bilanciato
-          </button>
-          <button className={funProfile === 'curvy' ? 'on' : ''} onClick={() => setFunProfile('curvy')}>
-            Max curve
-          </button>
+        <div className="fun-slider">
+          <div className="fun-slider-head">
+            <span>Diretto</span>
+            <strong>
+              {funLabel(uiLevel)} · {uiLevel}
+            </strong>
+            <span>Max curve</span>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={5}
+            value={uiLevel}
+            onChange={(e) => setUiLevel(Number(e.target.value))}
+            onPointerUp={() => setFunLevel(uiLevel)}
+            onKeyUp={(e) => {
+              if (e.key.startsWith('Arrow')) setFunLevel(uiLevel);
+            }}
+          />
         </div>
 
         {points.length === 0 && (
@@ -346,7 +376,7 @@ export default function App() {
         {routes.fun && (
           <motion.div className="cards" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
             <RoutePanel
-              title={mode === 'loop' ? `Anello ${FUN_LABEL[funProfile].toLowerCase()}` : FUN_LABEL[funProfile]}
+              title={mode === 'loop' ? `Anello · ${funLabel(funLevel)}` : `${funLabel(funLevel)} (${funLevel})`}
               kind="fun"
               path={routes.fun}
               selected={selected === 'fun'}

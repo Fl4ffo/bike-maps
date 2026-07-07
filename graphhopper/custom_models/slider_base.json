@@ -1,0 +1,14 @@
+// Profilo base per lo slider continuo: NESSUNA penalita' e distance_influence
+// minimo (15). E' l'inviluppo inferiore dei pesi: i custom_model per-richiesta
+// possono solo aggiungere penalita'/alzare il di (vincolo LM), quindi ogni
+// posizione dello slider (fast-like di=90 ... curvy-like con tutte le
+// penalita') resta ammissibile sopra questa preparazione.
+{
+  "distance_influence": 15,
+  "priority": [
+    { "if": "!car_access", "multiply_by": "0" }
+  ],
+  "speed": [
+    { "if": "true", "limit_to": "car_average_speed" }
+  ]
+}

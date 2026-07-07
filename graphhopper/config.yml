@@ -44,6 +44,10 @@ graphhopper:
       turn_costs:
         vehicle_types: [motorcar, motor_vehicle]
       custom_model_files: [balanced.json]
+    - name: slider_base
+      turn_costs:
+        vehicle_types: [motorcar, motor_vehicle]
+      custom_model_files: [slider_base.json]
 
   # LM (landmarks) per tutti i profili: a scala nazionale il flessibile puro
   # non regge le tratte lunghe; gli LM danno query 10-50x piu' veloci
@@ -53,6 +57,7 @@ graphhopper:
     - profile: fast
     - profile: curvy
     - profile: balanced
+    - profile: slider_base
 
   prepare.min_network_size: 200
 

@@ -3,7 +3,7 @@ export interface LngLat {
   lat: number;
 }
 
-export type ProfileId = 'fast' | 'curvy' | 'balanced';
+export type ProfileId = 'fast' | 'curvy' | 'balanced' | 'slider_base';
 export type FunProfileId = Exclude<ProfileId, 'fast'>;
 
 export interface RoutePath {
@@ -25,23 +25,30 @@ const BASE = '/gh';
 export async function fetchRoute(
   profile: ProfileId,
   points: LngLat[],
-  opts: { roundTrip?: RoundTripOpts } = {},
+  opts: { roundTrip?: RoundTripOpts; customModel?: object } = {},
   signal?: AbortSignal,
 ): Promise<RoutePath> {
-  const params = new URLSearchParams();
-  for (const p of points) params.append('point', `${p.lat},${p.lng}`);
-  params.set('profile', profile);
-  params.set('points_encoded', 'false');
-  params.set('elevation', 'true');
-  params.set('instructions', 'false');
-  params.set('details', 'fun_curvature');
+  const payload: Record<string, unknown> = {
+    points: points.map((p) => [p.lng, p.lat]),
+    profile,
+    points_encoded: false,
+    elevation: true,
+    instructions: false,
+    details: ['fun_curvature'],
+  };
   if (opts.roundTrip) {
-    params.set('algorithm', 'round_trip');
-    params.set('round_trip.distance', String(Math.round(opts.roundTrip.distanceKm * 1000)));
-    params.set('round_trip.seed', String(opts.roundTrip.seed));
+    payload.algorithm = 'round_trip';
+    payload['round_trip.distance'] = Math.round(opts.roundTrip.distanceKm * 1000);
+    payload['round_trip.seed'] = opts.roundTrip.seed;
   }
+  if (opts.customModel) payload.custom_model = opts.customModel;
 
-  const res = await fetch(`${BASE}/route?${params.toString()}`, { signal });
+  const res = await fetch(`${BASE}/route`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal,
+  });
   const body: unknown = await res.json();
   if (!res.ok) {
     const msg =

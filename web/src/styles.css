@@ -190,8 +190,27 @@ body,
   font-weight: 600;
 }
 
-.fun-choice button.on {
-  background: #e8590c;
+.fun-slider {
+  padding: 2px 2px 0;
+}
+
+.fun-slider-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+
+.fun-slider-head strong {
+  color: #e8590c;
+  font-size: 13px;
+}
+
+.fun-slider input[type='range'] {
+  width: 100%;
+  accent-color: #e8590c;
 }
 
 .search {
