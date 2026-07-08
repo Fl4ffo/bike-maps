@@ -59,7 +59,9 @@ await app.register(fastifyStatic, { root: WEB_DIST, wildcard: false });
 // fallback SPA: ogni rotta non-API e non-proxy serve l'app
 app.setNotFoundHandler((req, reply) => {
   const url = req.raw.url ?? '';
-  if (url.startsWith('/api/') || url.startsWith('/gh/')) {
+  // niente fallback SPA per API, proxy o file con estensione (asset mancanti
+  // devono dare 404, non index.html: altrimenti pagina bianca silenziosa)
+  if (url.startsWith('/api/') || url.startsWith('/gh/') || /\.[a-z0-9]+(\?.*)?$/i.test(url)) {
     return reply.code(404).send({ error: 'not found' });
   }
   return reply.sendFile('index.html');
