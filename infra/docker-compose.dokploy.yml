@@ -1,0 +1,43 @@
+# Variante per Dokploy (self-hosted PaaS su Docker Swarm).
+# Differenze rispetto a docker-compose.yml:
+#   - NIENTE Caddy: il reverse proxy + TLS li fa il Traefik di Dokploy.
+#     Si espone il servizio "api" (porta 8790) dalla UI Dokploy -> Domains.
+#   - I dati stanno in un path ASSOLUTO del server (/opt/bikemaps/data), non in
+#     ../data: Dokploy clona il repo in una sua cartella, quindi il grafo/PBF va
+#     messo fuori dal checkout e montato per path assoluto (ci fai lo SCP a mano).
+#   - "api" e' collegato alla dokploy-network (esterna) cosi' Traefik lo raggiunge,
+#     e alla rete "internal" per parlare con graphhopper.
+services:
+  graphhopper:
+    build:
+      context: ..
+      dockerfile: infra/graphhopper.Dockerfile
+    environment:
+      - IMPORT_HEAP=9g # import Italia+LM (primo avvio senza graph-cache)
+      - SERVE_HEAP=6g # server a regime
+    volumes:
+      - /opt/bikemaps/data:/app/data
+    networks:
+      - internal
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/api.Dockerfile
+    environment:
+      - GH_URL=http://graphhopper:8989
+      - BM_DB=/app/data/bikemaps.db
+    volumes:
+      - /opt/bikemaps/data:/app/data
+    depends_on:
+      - graphhopper
+    networks:
+      - internal
+      - dokploy-network
+    restart: unless-stopped
+
+networks:
+  internal:
+  dokploy-network:
+    external: true
