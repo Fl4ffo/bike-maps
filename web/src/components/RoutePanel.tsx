@@ -1,5 +1,6 @@
 import type { RoutePath } from '../api';
 import { computeFunScore } from '../score';
+import { Icon } from './Icon';
 
 function fmtTime(ms: number): string {
   const min = Math.round(ms / 60000);
@@ -23,13 +24,13 @@ export default function RoutePanel({ title, kind, path, selected, onSelect, onGp
         <span className="dot" />
         <strong>{title}</strong>
         <span className="fun-badge" title="fun_curvature medio pesato sulla distanza (0-100)">
-          🌀 {score.avg.toFixed(0)}
+          <Icon name="curve" size={13} /> {score.avg.toFixed(0)}
         </span>
       </div>
       <div className="card-stats">
         <span>{(path.distance / 1000).toFixed(1)} km</span>
         <span>{fmtTime(path.time)}</span>
-        <span>↗ {Math.round(path.ascend)} m</span>
+        <span><Icon name="arrowUpRight" size={13} /> {Math.round(path.ascend)} m</span>
         <span>{score.curvyPct.toFixed(0)}% curve</span>
       </div>
       <button

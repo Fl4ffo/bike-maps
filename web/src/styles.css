@@ -73,6 +73,13 @@
   box-sizing: border-box;
 }
 
+/* icone SVG (famiglia unica) — allineate alla riga di testo */
+.icon {
+  display: inline-block;
+  vertical-align: -0.15em;
+  flex-shrink: 0;
+}
+
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -118,7 +125,8 @@ body,
 }
 
 .panel .moto {
-  font-size: 18px;
+  color: var(--accent);
+  vertical-align: middle;
 }
 
 .tagline {
@@ -463,11 +471,12 @@ body,
 }
 
 .chips button {
+  display: inline-flex;
+  align-items: center;
   border: none;
   background: none;
   color: var(--text-tertiary);
   cursor: pointer;
-  font-size: 12px;
   padding: 2px;
   transition: color var(--dur) var(--ease);
 }
@@ -730,6 +739,9 @@ body,
 }
 
 .saved-list li > button:not(.saved-name) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface-card);

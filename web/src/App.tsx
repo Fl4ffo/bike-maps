@@ -10,6 +10,7 @@ import { POI_META, poisAlong } from './poi';
 import type { Poi, PoiType } from './poi';
 import MapView from './components/MapView';
 import RoutePanel from './components/RoutePanel';
+import { Icon } from './components/Icon';
 import ElevationChart from './components/ElevationChart';
 import SearchBox from './components/SearchBox';
 import SavedRoutes from './components/SavedRoutes';
@@ -293,7 +294,7 @@ export default function App() {
       <aside className="panel">
         <header>
           <h1>
-            Bike Maps <span className="moto">🏍️</span>
+            Bike Maps <span className="moto"><Icon name="route" size={20} /></span>
           </h1>
           <p className="tagline">il percorso più divertente, non il più veloce</p>
         </header>
@@ -326,7 +327,7 @@ export default function App() {
               </select>
             </label>
             <button onClick={() => setSeed(newSeed())} disabled={points.length === 0}>
-              🎲 Altro giro
+              <Icon name="shuffle" size={14} /> Altro giro
             </button>
           </div>
         )}
@@ -371,7 +372,7 @@ export default function App() {
               <li key={`${i}-${p.lng.toFixed(5)}-${p.lat.toFixed(5)}`}>
                 <span>{pointLabel(i, points.length, mode === 'loop')}</span>
                 <button title="Rimuovi" onClick={() => removePoint(i)}>
-                  ✕
+                  <Icon name="x" size={13} label="Rimuovi tappa" />
                 </button>
               </li>
             ))}
@@ -448,7 +449,7 @@ export default function App() {
                     onClick={() => togglePoiType(t)}
                     title={POI_META[t].label}
                   >
-                    {POI_META[t].icon} {count}
+                    <Icon name={POI_META[t].icon} size={14} color={POI_META[t].color} /> {count}
                   </button>
                 );
               })}
@@ -459,7 +460,7 @@ export default function App() {
                   .filter((p) => p.type === 'pass' && p.name)
                   .map((p) => (
                     <li key={p.id}>
-                      ⛰️ {p.name}
+                      <Icon name="mountain" size={14} color={POI_META.pass.color} /> {p.name}
                       {p.ele ? ` (${p.ele} m)` : ''} · km {p.alongKm.toFixed(0)}
                     </li>
                   ))}
@@ -470,7 +471,11 @@ export default function App() {
 
         {routes.fun && (
           <div className="save-box">
-            {saveName === null && !savedId && <button onClick={() => setSaveName('')}>💾 Salva giro</button>}
+            {saveName === null && !savedId && (
+              <button onClick={() => setSaveName('')}>
+                <Icon name="bookmark" size={15} /> Salva giro
+              </button>
+            )}
             {saveName !== null && (
               <div className="save-form">
                 <input
@@ -490,7 +495,7 @@ export default function App() {
             )}
             {savedId && (
               <div className="saved-ok">
-                ✓ Salvato, link copiato: <a href={shareUrl(savedId)}>{shareUrl(savedId)}</a>
+                <Icon name="check" size={14} /> Salvato, link copiato: <a href={shareUrl(savedId)}>{shareUrl(savedId)}</a>
               </div>
             )}
           </div>
@@ -498,7 +503,9 @@ export default function App() {
 
         {points.length > 0 && (
           <div className="actions">
-            <button onClick={reset}>✕ Reimposta</button>
+            <button onClick={reset}>
+              <Icon name="x" size={14} /> Reimposta
+            </button>
           </div>
         )}
 

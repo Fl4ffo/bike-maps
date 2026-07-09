@@ -3,6 +3,7 @@ import maplibregl, { Map as MLMap, Marker, GeoJSONSource } from 'maplibre-gl';
 import type { LngLat, RoutePath } from '../api';
 import { POI_META } from '../poi';
 import type { Poi } from '../poi';
+import { iconMarkup } from './Icon';
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 const EMPTY = { type: 'FeatureCollection', features: [] } as const;
@@ -149,7 +150,9 @@ export default function MapView({ points, loop, baseline, fun, pois, hoverPoint,
         const eleTxt = p.ele ? ` (${p.ele} m)` : '';
         new maplibregl.Popup({ closeButton: false, offset: 10 })
           .setLngLat(e.lngLat)
-          .setHTML(`<div class="poi-popup">${meta.icon} <b>${title}</b>${eleTxt}<br>al km ${p.alongKm}</div>`)
+          .setHTML(
+            `<div class="poi-popup">${iconMarkup(meta.icon, { size: 14, color: meta.color })} <b>${title}</b>${eleTxt}<br>al km ${p.alongKm}</div>`,
+          )
           .addTo(map);
       });
       map.on('mouseenter', 'pois', () => {

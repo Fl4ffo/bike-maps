@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { deleteRoute, listRoutes, shareUrl } from '../saved';
 import type { SavedRouteSummary } from '../saved';
+import { Icon } from './Icon';
 
 interface Props {
   refreshKey: number; // incrementato dopo ogni salvataggio
@@ -42,7 +43,8 @@ export default function SavedRoutes({ refreshKey, onLoad }: Props) {
   return (
     <div className="saved">
       <button className="saved-toggle" onClick={() => setOpen(!open)}>
-        📁 I miei giri {open ? '▾' : '▸'}
+        <Icon name="folder" size={15} /> I miei giri{' '}
+        <Icon name={open ? 'chevronDown' : 'chevronRight'} size={14} />
       </button>
       {open && (
         <ul className="saved-list">
@@ -52,15 +54,16 @@ export default function SavedRoutes({ refreshKey, onLoad }: Props) {
               <button className="saved-name" onClick={() => onLoad(r.id)} title="Apri questo giro">
                 <strong>{r.name}</strong>
                 <span>
-                  {r.mode === 'loop' ? '⭕' : '→'} {(r.distance / 1000).toFixed(0)} km · {fmtTime(r.timeMs)} · 🌀{' '}
+                  <Icon name={r.mode === 'loop' ? 'repeat' : 'arrowRight'} size={12} />{' '}
+                  {(r.distance / 1000).toFixed(0)} km · {fmtTime(r.timeMs)} · <Icon name="curve" size={12} />{' '}
                   {r.funAvg.toFixed(0)}
                 </span>
               </button>
               <button title="Copia link condivisibile" onClick={() => copy(r.id)}>
-                {copied === r.id ? '✓' : '🔗'}
+                <Icon name={copied === r.id ? 'check' : 'link'} size={14} label={copied === r.id ? 'Link copiato' : 'Copia link'} />
               </button>
               <button title="Elimina" onClick={() => remove(r.id)}>
-                🗑
+                <Icon name="trash" size={14} label="Elimina giro" />
               </button>
             </li>
           ))}
