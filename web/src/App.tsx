@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import { fetchRoute, friendlyError, isRetryableRoundTripError } from './api';
 import type { LngLat, RoutePath } from './api';
 import { sliderToModel } from './slider';
@@ -31,6 +31,13 @@ function funLabel(k: number): string {
 }
 const LOOP_KMS = [50, 80, 120, 180, 250];
 const RT_RETRIES = 4;
+
+// entrata discreta e sfalsata delle card (easing = token di motion del DS)
+const CARDS_STAGGER: Variants = { show: { transition: { staggerChildren: 0.06, delayChildren: 0.02 } } };
+const CARD_ITEM: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.4, 0, 0.2, 1] } },
+};
 
 function newSeed(): number {
   return Math.floor(Math.random() * 1_000_000);
@@ -267,6 +274,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const reduceMotion = useReducedMotion();
   const selPath = routes[selected] ?? routes.fun;
   const gpxName = mode === 'loop' ? 'bikemaps-anello' : 'bikemaps-divertente';
 
@@ -374,24 +382,33 @@ export default function App() {
         {loading && <div className="loading">Calcolo percorsi…</div>}
 
         {routes.fun && (
-          <motion.div className="cards" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-            <RoutePanel
-              title={mode === 'loop' ? `Anello · ${funLabel(funLevel)}` : `${funLabel(funLevel)} (${funLevel})`}
-              kind="fun"
-              path={routes.fun}
-              selected={selected === 'fun'}
-              onSelect={() => setSelected('fun')}
-              onGpx={() => downloadGpx(routes.fun as RoutePath, gpxName)}
-            />
-            {routes.fast && (
+          <motion.div
+            className="cards"
+            variants={reduceMotion ? undefined : CARDS_STAGGER}
+            initial={reduceMotion ? false : 'hidden'}
+            animate={reduceMotion ? false : 'show'}
+          >
+            <motion.div variants={reduceMotion ? undefined : CARD_ITEM}>
               <RoutePanel
-                title="Veloce"
-                kind="fast"
-                path={routes.fast}
-                selected={selected === 'fast'}
-                onSelect={() => setSelected('fast')}
-                onGpx={() => downloadGpx(routes.fast as RoutePath, 'bikemaps-veloce')}
+                title={mode === 'loop' ? `Anello · ${funLabel(funLevel)}` : `${funLabel(funLevel)} (${funLevel})`}
+                kind="fun"
+                path={routes.fun}
+                selected={selected === 'fun'}
+                onSelect={() => setSelected('fun')}
+                onGpx={() => downloadGpx(routes.fun as RoutePath, gpxName)}
               />
+            </motion.div>
+            {routes.fast && (
+              <motion.div variants={reduceMotion ? undefined : CARD_ITEM}>
+                <RoutePanel
+                  title="Veloce"
+                  kind="fast"
+                  path={routes.fast}
+                  selected={selected === 'fast'}
+                  onSelect={() => setSelected('fast')}
+                  onGpx={() => downloadGpx(routes.fast as RoutePath, 'bikemaps-veloce')}
+                />
+              </motion.div>
             )}
           </motion.div>
         )}
@@ -410,7 +427,7 @@ export default function App() {
         {selPath && routes.fun && (
           <ElevationChart
             path={selPath}
-            color={selected === 'fast' && routes.fast ? '#64748b' : '#e8590c'}
+            color={selected === 'fast' && routes.fast ? '#71717a' : '#4f9d82'}
             onHover={(idx) => {
               const c = selPath.points.coordinates;
               setHoverPoint(idx != null && c[idx] ? [c[idx][0], c[idx][1]] : null);

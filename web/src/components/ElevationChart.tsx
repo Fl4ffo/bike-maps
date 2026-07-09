@@ -88,7 +88,7 @@ export default function ElevationChart({ path, color, onHover }: Props) {
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" onMouseMove={handleMove} onMouseLeave={handleLeave}>
         <path d={area} fill={color} opacity="0.15" />
         <path d={line} fill="none" stroke={color} strokeWidth="2" />
-        {hx != null && <line x1={hx} y1={0} x2={hx} y2={H} stroke="#1e293b" strokeWidth="1" strokeDasharray="3 3" />}
+        {hx != null && <line x1={hx} y1={0} x2={hx} y2={H} stroke="#18181b" strokeWidth="1" strokeDasharray="3 3" />}
       </svg>
     </div>
   );

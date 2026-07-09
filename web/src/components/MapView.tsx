@@ -100,7 +100,7 @@ export default function MapView({ points, loop, baseline, fun, pois, hoverPoint,
           layout: { 'line-cap': 'round', 'line-join': 'round' },
           paint:
             id === 'baseline'
-              ? { 'line-color': '#64748b', 'line-width': 4, 'line-opacity': 0.75 }
+              ? { 'line-color': '#71717a', 'line-width': 4, 'line-opacity': 0.75 }
               : {
                   'line-color': [
                     'interpolate', ['linear'], ['get', 'fun'],
@@ -117,7 +117,7 @@ export default function MapView({ points, loop, baseline, fun, pois, hoverPoint,
         id: 'hover-pt',
         type: 'circle',
         source: 'hover-pt',
-        paint: { 'circle-radius': 7, 'circle-color': '#1e293b', 'circle-stroke-width': 2.5, 'circle-stroke-color': '#ffffff' },
+        paint: { 'circle-radius': 7, 'circle-color': '#18181b', 'circle-stroke-width': 2.5, 'circle-stroke-color': '#ffffff' },
       });
 
       map.addSource('pois', { type: 'geojson', data: EMPTY as never });
@@ -133,7 +133,7 @@ export default function MapView({ points, loop, baseline, fun, pois, hoverPoint,
             'pass', POI_META.pass.color,
             'viewpoint', POI_META.viewpoint.color,
             'fuel', POI_META.fuel.color,
-            '#64748b',
+            '#71717a',
           ],
           'circle-stroke-width': 1.5,
           'circle-stroke-color': '#ffffff',
