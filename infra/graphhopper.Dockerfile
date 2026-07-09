@@ -17,8 +17,10 @@ WORKDIR /app/graphhopper
 # JAR ufficiale (ADD scarica l'URL remoto: niente curl nell'immagine)
 ADD https://github.com/graphhopper/graphhopper/releases/download/${GH_VERSION}/graphhopper-web-${GH_VERSION}.jar ./${GH_JAR}
 
-# config + sorgenti dell'estensione EV custom
+# config + custom model dei profili (referenziati da config.yml:
+# custom_models.directory) + sorgenti dell'estensione EV custom
 COPY graphhopper/config.yml ./config.yml
+COPY graphhopper/custom_models ./custom_models
 COPY graphhopper/ext/src ./ext/src
 
 # compila fun_curvature/fun_signals una volta sola in fase di build
