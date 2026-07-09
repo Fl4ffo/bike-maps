@@ -1,0 +1,13 @@
+# Il build context dei Dockerfile e' la root del repo: senza questo file Docker
+# spedirebbe al daemon i multi-GB di data/ (grafo, PBF) ad ogni build.
+data/
+**/node_modules
+**/dist
+web/dist
+api/dist
+graphhopper/*.jar
+graphhopper/ext/classes
+pipeline/.venv
+.git
+*.log
+scratchpad/

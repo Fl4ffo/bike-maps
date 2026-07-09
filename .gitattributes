@@ -1,0 +1,3 @@
+# Gli script eseguiti nei container Linux devono restare LF anche se il repo
+# viene clonato/committato da Windows (autocrlf).
+*.sh text eol=lf

@@ -1,14 +1,19 @@
 # Stack di produzione (VPS): Caddy (TLS) -> API (frontend + proxy) -> GraphHopper.
-# Prerequisiti sul server: graphhopper/ col JAR e data/ col graph-cache già
-# importato — vedi DEPLOY.md. Avvio:  docker compose up -d --build
+# Tutto il CODICE e' dentro le immagini (build da questo compose). Sul server
+# serve solo la cartella ../data col dato: il grafo gia' importato
+# (data/graph-cache) OPPURE il solo PBF arricchito (data/italy-fun.osm.pbf),
+# nel qual caso il container GraphHopper lo importa da solo al primo avvio.
+# Avvio unico:  docker compose up -d --build
 services:
   graphhopper:
-    image: eclipse-temurin:21-jre
-    working_dir: /app/graphhopper
-    command: java -Xmx6g -Xms2g -jar graphhopper-web-11.0.jar server config.yml # Italia+LM: 6 GB
+    build:
+      context: ..
+      dockerfile: infra/graphhopper.Dockerfile
+    environment:
+      - IMPORT_HEAP=9g # import Italia+LM (primo avvio senza graph-cache)
+      - SERVE_HEAP=6g # server a regime
     volumes:
-      - ../graphhopper:/app/graphhopper
-      - ../data:/app/data
+      - ../data:/app/data # grafo, PBF, elevation-cache: unico stato persistente
     restart: unless-stopped
     # nessuna porta pubblicata: raggiungibile solo dalla rete interna del compose
 
